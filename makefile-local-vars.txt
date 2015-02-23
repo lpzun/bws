@@ -1,0 +1,16 @@
+FLAGS     = -Wall -g -D__SAFE_COMPUTATION__
+#FLAGS     = -Wall -g -D__SAFE_COMPUTATION__ -D__VERBOSE__
+#FLAGS     = -O3
+#FLAGS     = -O3 -D__VERBOSE__
+
+IDIRS     = -I$(C)
+
+BASE      = bws
+
+COBJECTS  = $(C)/state.o $(C)/bwra.o $(C)/functions.o $(C)/input.o \
+	    $(C)/refs
+
+ROBJVARS  = COBJECTS
+LIBS      = -lm
+
+DISTCLEAN = find Examples -type f -name *no_comment -exec rm {} \;
