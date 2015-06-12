@@ -1,10 +1,10 @@
 #ifndef __FUNCTIONS_HH__
 #define __FUNCTIONS_HH__
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <time.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cassert>
+#include <ctime>
 
 #include <string>
 #include <sstream>
@@ -13,7 +13,7 @@
 #include <ostream>
 #include <cctype>
 #include <list>
-#include<stack>
+#include <stack>
 #include <set>
 #include <vector>
 #include <map>

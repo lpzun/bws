@@ -8,7 +8,8 @@
 #ifndef __INPUT_HH__
 #define __INPUT_HH__
 
-#include <stdlib.h>
+#include <cstdlib>
+
 #include <string>
 #include <list>
 
