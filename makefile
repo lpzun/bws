@@ -14,37 +14,41 @@
 # executables, use SOURCES=$(BASE).c, HEADERS=$(BASE).h.                  #
 # See an example in EXAMPLES/makefile-local-vars.                         #
 ###########################################################################
+# Override these variables (or add new ones) locally
+APP	     = bws # the name of application
+ILIBS        = -lz#
+IINCLUDE     =#
+
+#ISTD	      = -std=c++0x                                                 # for old cpp standard
+ISTD	     = -std=c++11
+
+BINDIR       = bin
+OBJDIR       = obj
+SRCDIR       = src
+SRCDIRS      = $(shell find $(SRCDIR) -name '*.$(CSUFF)' -exec dirname {} \; | uniq)
 
 CSUFF        = cc
 #CSUFF        = c
 
 DEFAULT      = $(BASE)
 EDITFILES    = test.$(TSUFF) $(wildcard *.$(HSUFF)) $(wildcard *.$(CSUFF)) $(BASE).$(CSUFF)
-FLAGS        = -Wall -g#                          -O3, -D__SAFE_COMPUTATION__, etc
-SOURCES      = $(wildcard *.$(CSUFF))#            list of local files that will be compiled and linked into executable
+FLAGS        = -Wall -g $(ISTD)#                          -O3, -D__SAFE_COMPUTATION__, etc
+SOURCES      = $(shell find $(SRCDIR) -name '*.$(CSUFF)') #$(wildcard *.$(CSUFF))#            list of local files that will be compiled and linked into executable
 
 # For compiling:
 IDIRS        =#                                   -I$(C)
 HEADERS      = $(wildcard *.$(HSUFF))#            may set to a single .h file if only one specific file is compiled
 
 # For linking:
-BASE         = $(firstword $(BASES))#             executable (final compilation). If directory contains several .c files, redefine this
-# Include a line as follows for all remote objects *per directory* :
-# COBJECTS = $(C)/functions.o $(C)/input.o#
-# ABCOBJECTS = ABC/obj1.o ABC/obj2.o
-# Now add the defined names into ROBJVARS:
-# ROBJVARS   = COBJECTS ABCOBJECTS#
+#BASE         = $(firstword $(BASES))#             executable (final compilation). If directory contains several .c files, redefine this
+BASE         = $(BINDIR)/$(APP)
 ROBJVARS     =
 LDIRS        =#
-LIBS         =#                                   -lm
+LIBS         =$(ILIBS)#                                   -lm
 
 EXPORT       = CCOMP=$(CCOMP) FLAGS="$(FLAGS)"
 
 DISTCLEAN    =#                                   any additional commands to be executed by the distclean command (like cleaning sub directories)
-
-# Override these variables (or add new ones) locally
--include makefile-local-vars
-
 
 #####################################
 # 2. Private Region (do not change) #
@@ -63,11 +67,11 @@ endif
 SHELL    = /bin/bash
 BASES    = $(wildcard *.$(CSUFF))
 BASES   := $(BASES:.$(CSUFF)=)
-LOBJECTS = $(SOURCES:.$(CSUFF)=.o)
+LOBJECTS = $(patsubst %.$(CSUFF),$(OBJDIR)/%.o, $(SOURCES:.$(CSUFF)=.o)) # 
 RDIRS    = $(foreach VAR,$(ROBJVARS),$(dir $(firstword $($(VAR)))))
 ROBJECTS = $(foreach VAR,$(ROBJVARS),$($(VAR)))
 OBJECTS  = $(LOBJECTS) $(ROBJECTS)
-CFLAGS   = $(FLAGS) $(IDIRS)
+CFLAGS   = $(FLAGS) $(IDIRS) $(IINCLUDE)#
 LFLAGS   = $(FLAGS) $(LDIRS)
 RERROR   = { echo "error in recursive make robjects";  exit 1; }
 DERROR   = { echo "error in recursive make distclean"; exit 1; }
@@ -92,10 +96,11 @@ unexport MAKEFLAGS # do not export variables by default (only those mentioned in
 # Targets Region (do not change) #
 ##################################
 
+$(DEFAULT): $(OBJECTS) #robjects
+	@mkdir -p `dirname $@`
+	$(CCOMP) $(LFLAGS) $(OBJECTS) $(LIBS) -o $@
 
-$(BASE): $(LOBJECTS) robjects
-	$(CCOMP) $(LFLAGS) $(OBJECTS) $(LIBS) -o bws
-$(LOBJECTS): %.o: %.$(CSUFF) $(HEADERS)
+$(OBJECTS): %.o: %.$(CSUFF) $(HEADERS)
 	$(CCOMP) $(CFLAGS) $< -c -o $@
 
 robjects:
@@ -105,12 +110,20 @@ robjects:
 # Cleaning (do not change) #
 ############################
 
-clean:
+clean: 	CLEANOBJS
 	#rm -f $(BASES)
 	rm -f *.o test a.out
 
-distclean: clean
-	rm -f $(BASES)
+distclean: clean CLEANOBJS
+	rm -rf $(BINDIR)
 	rm -f *~
 	$(foreach DIR,$(RDIRS),$(MAKE) -C $(DIR) $(EXPORT) distclean || $(DERROR);)
 	$(DISTCLEAN)
+
+CLEANOBJS:
+	@$(call clean-obj)
+
+# description: for cleaning all objects
+define clean-obj
+	find . -name '*.o' -type f -delete
+endef
